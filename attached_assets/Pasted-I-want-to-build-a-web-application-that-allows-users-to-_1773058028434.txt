@@ -1,0 +1,155 @@
+I want to build a web application that allows users to send invitation messages via WhatsApp using their WhatsApp Business account.
+
+Please review the following requirements and suggest improvements, system architecture, and best practices.
+
+Application Overview
+
+The platform allows users to send invitations to multiple contacts through WhatsApp. Users can upload contact lists, compose messages, attach media, and track message status.
+
+Core Requirements
+1. Authentication
+
+The application must support:
+
+Email signup/login
+
+SSO authentication (Google or other OAuth providers)
+
+If a user signs up using SSO, the system must require them to connect their WhatsApp Business account before accessing any features.
+
+Flow:
+
+User signs up or logs in
+
+System checks if WhatsApp Business number is connected
+
+If not connected, the user must add and verify their WhatsApp Business number
+
+Until the number is connected, the user cannot access the dashboard or other features
+
+2. WhatsApp Integration
+
+Users must connect their WhatsApp Business account using the official WhatsApp Business API.
+
+The system should support:
+
+Sending text messages
+
+Sending images
+
+Sending PDF files
+
+Sending invitations to multiple contacts
+
+The application should also track message status:
+
+Sent
+
+Delivered
+
+Read (Seen)
+
+3. Contact Management
+
+Users should be able to import contacts via Excel.
+
+Excel format example:
+
+Name
+PhoneNumber
+
+The system should:
+
+Parse Excel files
+
+Validate phone numbers
+
+Store contacts in the database
+
+Prevent duplicate entries
+
+4. Messaging System
+
+Users can:
+
+Create a message
+
+Attach images
+
+Attach PDF files
+
+Select contacts
+
+Send invitations
+
+Messages should be processed using a queue system to support bulk sending.
+
+5. Message Status Tracking
+
+The system should track message status using WhatsApp webhooks.
+
+Statuses include:
+
+Sent
+
+Delivered
+
+Read
+
+Users should be able to view message analytics in a dashboard.
+
+6. Tech Stack
+
+Frontend:
+
+React
+
+Next.js
+
+Backend:
+
+Node.js
+
+GraphQL API
+
+Database:
+
+PostgreSQL
+
+Queue & Background Jobs:
+
+Redis
+
+Media Storage:
+
+Cloudinary (for images and PDFs)
+
+7. Additional Requirements
+
+Implement rate limiting for message sending
+
+Implement background workers for message processing
+
+Ensure WhatsApp API rate limits are respected
+
+Secure webhook endpoints
+
+Provide analytics dashboard for invite campaigns
+
+Expected Output
+
+Please provide:
+
+Suggested system architecture
+
+Database schema
+
+GraphQL schema design
+
+Recommended folder structure
+
+API design
+
+Security considerations
+
+Scalability strategy
