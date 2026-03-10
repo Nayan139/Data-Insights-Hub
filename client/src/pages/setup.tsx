@@ -39,11 +39,22 @@ export default function Setup() {
         });
         // App.tsx router will automatically redirect to dashboard since waAccount is now populated
       },
-      onError: (error) => {
+      onError: (error: any) => {
+        const errorMsg = error.message || "Verification Failed";
+        
+        // Map specific error messages to form fields
+        if (errorMsg.includes("Invalid WhatsApp Number")) {
+          form.setError("phoneNumber", { message: "Invalid WhatsApp Number" });
+        } else if (errorMsg.includes("Invalid Token")) {
+          form.setError("accessToken", { message: "Invalid or expired token" });
+        } else if (errorMsg.includes("already connected")) {
+          form.setError("phoneNumber", { message: "This WhatsApp account is already connected" });
+        }
+        
         toast({
           variant: "destructive",
-          title: "Setup Failed",
-          description: error.message,
+          title: "Verification Failed",
+          description: errorMsg,
         });
       },
     });

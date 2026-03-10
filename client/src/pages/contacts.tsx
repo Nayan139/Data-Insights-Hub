@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Layout } from "@/components/layout";
 import { useContacts, useCreateContact, useDeleteContact } from "@/hooks/use-contacts";
 import { useForm } from "react-hook-form";
@@ -54,6 +54,8 @@ export default function Contacts() {
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CreateContactRequest>({
     resolver: zodResolver(api.contacts.create.input),
@@ -80,6 +82,61 @@ export default function Contacts() {
     });
   };
 
+  const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      
+      const response = await fetch("/api/contacts/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csvContent: text }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Import Failed",
+          description: error.message || "CSV validation failed",
+        });
+        
+        if (error.errors && Array.isArray(error.errors)) {
+          error.errors.slice(0, 3).forEach((err: string) => {
+            toast({
+              variant: "destructive",
+              title: "Validation Error",
+              description: err,
+            });
+          });
+        }
+        return;
+      }
+
+      const result = await response.json();
+      toast({
+        title: "Import Successful",
+        description: `Imported ${result.imported} contact(s)${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}`,
+      });
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to read file",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const filteredContacts = contacts?.filter(c => 
     c.name.toLowerCase().includes(search.toLowerCase()) || 
     c.phoneNumber.includes(search)
@@ -102,9 +159,22 @@ export default function Contacts() {
         </div>
         
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button variant="outline" className="h-11 rounded-xl bg-card border-border/50 shadow-sm" onClick={() => toast({ title: "Coming Soon", description: "Excel import will be available in the next update." })}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            onChange={handleCSVImport}
+            disabled={isImporting}
+            className="hidden"
+          />
+          <Button 
+            variant="outline" 
+            className="h-11 rounded-xl bg-card border-border/50 shadow-sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+          >
             <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
-            Import CSV
+            {isImporting ? "Importing..." : "Import CSV"}
           </Button>
 
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

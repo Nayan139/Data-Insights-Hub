@@ -33,6 +33,17 @@ export async function registerRoutes(
         return res.status(400).json({ message: "WhatsApp account already connected" });
       }
 
+      // Validate with WhatsApp API
+      const { verifyWhatsAppAccount } = await import("./validation/whatsapp");
+      const verification = await verifyWhatsAppAccount(input.phoneNumber, input.accessToken);
+
+      if (!verification.valid) {
+        return res.status(400).json({
+          message: verification.error || "Verification Failed",
+          field: "whatsapp"
+        });
+      }
+
       const account = await storage.createWhatsappAccount(userId, input);
       res.status(201).json(account);
     } catch (err) {
@@ -43,6 +54,51 @@ export async function registerRoutes(
         });
       }
       throw err;
+    }
+  });
+
+  // CSV Import endpoint
+  app.post("/api/contacts/import", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { csvContent } = req.body;
+
+      if (!csvContent || typeof csvContent !== "string") {
+        return res.status(400).json({ message: "CSV content is required" });
+      }
+
+      const { processCSVData } = await import("./validation/csv");
+      const result = await processCSVData(csvContent);
+
+      if (!result.success) {
+        return res.status(400).json({
+          message: "CSV validation failed",
+          errors: result.errors
+        });
+      }
+
+      // Import all contacts
+      const importedContacts = [];
+      for (const contact of result.contacts) {
+        const created = await storage.createContact(userId, {
+          name: contact.name,
+          phoneNumber: contact.whatsappNumber
+        });
+        importedContacts.push({
+          ...created,
+          status: contact.status
+        });
+      }
+
+      res.status(201).json({
+        imported: importedContacts.length,
+        skipped: result.skipped,
+        contacts: importedContacts,
+        errors: result.errors
+      });
+    } catch (err) {
+      console.error("Import error:", err);
+      res.status(500).json({ message: "Failed to import contacts" });
     }
   });
 
