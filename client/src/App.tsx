@@ -21,21 +21,18 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary">
       <Loader2 className="w-12 h-12 animate-spin mb-4" />
-      <h2 className="text-xl font-bold font-display animate-pulse">Loading WhatsMarket...</h2>
+      <h2 className="text-xl font-bold font-display animate-pulse">Loading Whatsup...</h2>
     </div>
   );
 }
 
 function ProtectedRouter() {
   const { user, isLoading: authLoading } = useAuth();
-  
   // Only query WA account if user is authenticated
   const { data: waAccount, isLoading: waLoading } = useWhatsappAccount(!!user);
-
   if (authLoading || (user && waLoading)) {
     return <LoadingScreen />;
   }
-
   // Not logged in -> force login
   if (!user) {
     return (
@@ -47,7 +44,6 @@ function ProtectedRouter() {
       </Switch>
     );
   }
-
   // Logged in but no WhatsApp account linked -> force setup
   if (!waAccount) {
     return (
@@ -59,7 +55,6 @@ function ProtectedRouter() {
       </Switch>
     );
   }
-
   // Authenticated & Setup Complete -> Main App
   return (
     <SidebarProvider style={{ "--sidebar-width": "16rem" } as React.CSSProperties}>
